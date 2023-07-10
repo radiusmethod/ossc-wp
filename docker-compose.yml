@@ -1,0 +1,28 @@
+version: '3.1'
+
+services:
+  wordpress:
+    depends_on:
+      - db
+    build: .
+    restart: always
+    ports:
+      - 8080:80
+      - 7443:443
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - ../:/var/www/html/wp-content/plugins
+      - ./logs/:/var/log/apache2
+
+  db:
+    image: mariadb:10.11
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: somewordpress
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wordpress
