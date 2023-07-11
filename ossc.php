@@ -116,7 +116,7 @@ if (!class_exists("rmOssc")) {
             if (isset($users)) {
                 $first = true;
                 foreach ($users as $user) {
-                    if(!$first) {
+                    if (!$first) {
                         $userString .= "+or+author:$user";
                     } else {
                         $first = false;
