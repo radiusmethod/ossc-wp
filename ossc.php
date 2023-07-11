@@ -2,7 +2,7 @@
 /*
 Plugin Name: Open Source Software Contributions
 Plugin URI: https://github.com/radiusmethod/wp-ossc/
-Description: Displays Pull Request links from github for Open Source Software Contributions.
+Description: Displays Pull Request links from GitHub for Open Source Software Contributions.
 Author: pjaudiomv
 Author URI: https://radiusmethod.com
 Version: 1.0.0
@@ -13,12 +13,10 @@ if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
     die('Sorry, but you cannot access this page directly.');
 }
 
-if (!class_exists("rmOssc")) {
+if (!class_exists("RmOssc")) {
     // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
-    // phpcs:disable Squiz.Classes.ValidClassName.NotCamelCaps
-    class rmOssc
+    class RmOssc
         // phpcs:enable PSR1.Classes.ClassDeclaration.MissingNamespace
-        // phpcs:enable Squiz.Classes.ValidClassName.NotCamelCaps
     {
         public function __construct()
         {
@@ -58,23 +56,23 @@ if (!class_exists("rmOssc")) {
         public function rmOsscAdminOptionsPage()
         {
             ?>
-            <div>
+            <div class="ossc_admin_div">
                 <h2>Open Source Software Contributions</h2>
                 <p>You must activate a github personal access token to use this plugin. Instructions can be found here <a herf="https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token">https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token</a>.</p>
                 <form method="post" action="options.php">
                     <?php settings_fields('rmOsscOptionGroup'); ?>
-                    <table>
-                        <tr valign="top">
+                    <table class="ossc_table">
+                        <tr class="ossc_tr">
                             <th scope="row"><label for="rmOsscGithubApiKey">GitHub API Token</label></th>
-                            <td><input type="text" id="rmOsscGithubApiKey" name="rmOsscGithubApiKey" value="<?php echo get_option('rmOsscGithubApiKey'); ?>" /></td>
+                            <td class="ossc_td"><input type="text" id="rmOsscGithubApiKey" name="rmOsscGithubApiKey" value="<?php echo get_option('rmOsscGithubApiKey'); ?>" /></td>
                         </tr>
-                        <tr valign="top">
+                        <tr class="ossc_tr">
                             <th scope="row"><label for="githubRepos">Github Repos (Comma Seperated String)</label></th>
-                            <td><input type="text" id="githubRepos" name="githubRepos" value="<?php echo get_option('githubRepos'); ?>" /></td>
+                            <td class="ossc_td"><input type="text" id="githubRepos" name="githubRepos" value="<?php echo get_option('githubRepos'); ?>" /></td>
                         </tr>
-                        <tr valign="top">
+                        <tr class="ossc_tr">
                             <th scope="row"><label for="githubUsers">Github Users (Comma Seperated String)</label></th>
-                            <td><input type="text" id="githubUsers" name="githubUsers" value="<?php echo get_option('githubUsers'); ?>" /></td>
+                            <td class="ossc_td"><input type="text" id="githubUsers" name="githubUsers" value="<?php echo get_option('githubUsers'); ?>" /></td>
                         </tr>
                     </table>
                     <?php  submit_button(); ?>
@@ -90,23 +88,29 @@ if (!class_exists("rmOssc")) {
 
         public function rmOsscFunc($atts = [])
         {
-            $content = '';
+            $content = '<div class="ossc_div">';
 
             $githubRepos = explode(",", get_option('githubRepos'));
             $githubUsers = explode(",", get_option('githubUsers'));
+
             foreach ($githubRepos as $repo) {
                 $repoName = explode("/", $repo)[1];
                 $content .= '<p><strong><a href="https://github.com/' . $repo . '" target="_blank" data-type="URL" rel="noreferrer noopener">' . $repoName . '</a></strong></p>';
                 $items = $this->githubPullRequests($repo, $githubUsers);
+                if (is_string($items)) {
+                    return $items;
+                }
                 usort($items['items'], function ($a, $b) {
                     return strnatcasecmp(strtotime($b['closed_at']), strtotime($a['closed_at']));
                 });
-                $content .= "<ul>";
+                $content .= '<ul class="ossc_ul">';
                 foreach ($items['items'] as $item) {
-                    $content .= '<li>' . '<a target="_blank" rel="noopener noreferrer" href="' . $item['html_url'] . '">' . $item['html_url'] . '</a></li>';
+                    $content .= '<li class="ossc_li">' . '<a target="_blank" rel="noopener noreferrer" href="' . $item['html_url'] . '">' . $item['html_url'] . '</a></li>';
                 }
                 $content .= "</ul>";
             }
+
+            $content .= "</div>";
             return $content;
         }
 
@@ -154,6 +158,6 @@ if (!class_exists("rmOssc")) {
     }
 }
 
-if (class_exists("rmOssc")) {
-    $rmOssc_instance = new rmOssc();
+if (class_exists("RmOssc")) {
+    $rmOssc_instance = new RmOssc();
 }
