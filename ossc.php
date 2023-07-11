@@ -42,8 +42,10 @@ if (!class_exists("rmOssc")) {
         {
             add_option('rmOsscGithubApiKey', 'Github API Key.');
             add_option('githubRepos', '');
+            add_option('githubUsers', '');
             register_setting('rmOsscOptionGroup', 'rmOsscGithubApiKey', 'rmOsscCallback');
             register_setting('rmOsscOptionGroup', 'githubRepos', 'rmOsscCallback');
+            register_setting('rmOsscOptionGroup', 'githubUsers', 'rmOsscCallback');
         }
 
         public function rmOsscOptionsPage()
@@ -70,7 +72,10 @@ if (!class_exists("rmOssc")) {
                             <th scope="row"><label for="githubRepos">Github Repos (Comma Seperated String)</label></th>
                             <td><input type="text" id="githubRepos" name="githubRepos" value="<?php echo get_option('githubRepos'); ?>" /></td>
                         </tr>
-
+                        <tr valign="top">
+                            <th scope="row"><label for="githubUsers">Github Users (Comma Seperated String)</label></th>
+                            <td><input type="text" id="githubUsers" name="githubUsers" value="<?php echo get_option('githubUsers'); ?>" /></td>
+                        </tr>
                     </table>
                     <?php  submit_button(); ?>
                 </form>
@@ -85,31 +90,42 @@ if (!class_exists("rmOssc")) {
 
         public function rmOsscFunc($atts = [])
         {
-            $args = shortcode_atts(
-                array(
-                    'githubRepos'        => '1'
-                ),
-                $atts
-            );
             $content = '';
-            $github_repos = sanitize_text_field($args['githubRepos']);
-            $githubRepos = get_option('githubRepos');
 
-            $items = $this->githubPullRequests();
-            usort($items['items'], function ($a, $b) {
-                return strnatcasecmp(strtotime($b['closed_at']), strtotime($a['closed_at']));
-            });
-            $content .= "<ul>";
-            foreach ($items['items'] as $item) {
-                $content .= '<li>' . '<a target="_blank" rel="noopener noreferrer" href="' . $item['html_url'] . '">' . $item['html_url'] . '</a></li>';
+            $githubRepos = explode(",", get_option('githubRepos'));
+            $githubUsers = explode(",", get_option('githubUsers'));
+            foreach ($githubRepos as $repo) {
+                $repoName = explode("/", $repo)[1];
+                $content .= '<p><strong><a href="https://github.com/' . $repo . '" target="_blank" data-type="URL" rel="noreferrer noopener">' . $repoName . '</a></strong></p>';
+                $items = $this->githubPullRequests($repo, $githubUsers);
+                usort($items['items'], function ($a, $b) {
+                    return strnatcasecmp(strtotime($b['closed_at']), strtotime($a['closed_at']));
+                });
+                $content .= "<ul>";
+                foreach ($items['items'] as $item) {
+                    $content .= '<li>' . '<a target="_blank" rel="noopener noreferrer" href="' . $item['html_url'] . '">' . $item['html_url'] . '</a></li>';
+                }
+                $content .= "</ul>";
             }
-            $content .= "</ul>";
             return $content;
         }
 
-        public function githubPullRequests($repo = '')
+        public function githubPullRequests($repo, $users = null)
         {
-            $results = $this->get("https://api.github.com/search/issues?q=is:pr+is:merged+repo:defenseunicorns/zarf+author:dgershman+or+author:caesarshift");
+            $userString = '';
+            if (isset($users)) {
+                $first = true;
+                foreach ($users as $user) {
+                    if(!$first) {
+                        $userString .= "+or+author:$user";
+                    } else {
+                        $first = false;
+                        $userString .= "+author:$user";
+                    }
+                }
+            }
+
+            $results = $this->get("https://api.github.com/search/issues?q=is:pr+is:merged+repo:$repo$userString");
             $httpcode = wp_remote_retrieve_response_code($results);
             $response_message = wp_remote_retrieve_response_message($results);
             if ($httpcode != 200 && $httpcode != 302 && $httpcode != 304 && !empty($response_message)) {
