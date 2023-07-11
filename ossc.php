@@ -67,11 +67,11 @@ if (!class_exists("RmOssc")) {
                             <td class="ossc_td"><input type="text" id="rmOsscGithubApiKey" name="rmOsscGithubApiKey" value="<?php echo get_option('rmOsscGithubApiKey'); ?>" /></td>
                         </tr>
                         <tr class="ossc_tr">
-                            <th scope="row"><label for="githubRepos">Github Repos (Comma Seperated String)</label></th>
+                            <th scope="row"><label for="githubRepos">Github Repos (Comma Separated String)</label></th>
                             <td class="ossc_td"><input type="text" id="githubRepos" name="githubRepos" value="<?php echo get_option('githubRepos'); ?>" /></td>
                         </tr>
                         <tr class="ossc_tr">
-                            <th scope="row"><label for="githubUsers">Github Users (Comma Seperated String)</label></th>
+                            <th scope="row"><label for="githubUsers">Github Users (Comma Separated String)</label></th>
                             <td class="ossc_td"><input type="text" id="githubUsers" name="githubUsers" value="<?php echo get_option('githubUsers'); ?>" /></td>
                         </tr>
                     </table>
