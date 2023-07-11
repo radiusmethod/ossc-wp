@@ -1,4 +1,3 @@
-li.ossc_li {
-    clear: both;
-    display: block;
+tr.ossc_tr {
+    vertical-align: top;
 }
