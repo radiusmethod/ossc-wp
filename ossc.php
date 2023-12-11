@@ -118,8 +118,8 @@ if (!class_exists("RmOssc")) {
         {
             $userString = '';
             if ($users) {
-                foreach ($users as $index => $user) {
-                    $connector = $index === 0 ? '+author:' : '+or+author:';
+                foreach ($users as $user) {
+                    $connector = '+author:';
                     $userString .= $connector . $user;
                 }
             }
