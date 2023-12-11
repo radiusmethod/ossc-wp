@@ -3,7 +3,7 @@
 Contributors: pjaudiomv, radius314
 Tags: ossc, open source software contributions, github, pull requests
 Tested up to: 6.3.0
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,10 @@ This section describes how to install the plugin and get it working.
 4. Add [ossc] shortcode to your WordPress page/post.
 
 == Changelog ==
+
+= 1.0.1 =
+
+* Use just +author over +or+author which generally is only needed when you use multiple logical operators.
 
 = 1.0.0 =
 

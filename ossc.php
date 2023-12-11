@@ -5,7 +5,7 @@ Plugin URI: https://github.com/radiusmethod/wp-ossc/
 Description: Displays Pull Request links from GitHub for Open Source Software Contributions.
 Author: pjaudiomv
 Author URI: https://radiusmethod.com
-Version: 1.0.0
+Version: 1.0.1
 Install: Drop this directory into the "wp-content/plugins/" directory and activate it.
 */
 /* Disallow direct access to the plugin file */
@@ -22,12 +22,12 @@ if (!class_exists("RmOssc")) {
         {
             if (is_admin()) {
                 // Back end
-                add_action("admin_menu", array(&$this, "rmOsscOptionsPage"));
-                add_action("admin_init", array(&$this, "rmOsscRegisterSettings"));
+                add_action("admin_menu", [$this, "rmOsscOptionsPage"]);
+                add_action("admin_init", [$this, "rmOsscRegisterSettings"]);
             } else {
                 // Front end
-                add_action("wp_enqueue_scripts", array(&$this, "enqueueFrontendFiles"));
-                add_shortcode('ossc', array(&$this, "rmOsscFunc"));
+                add_action("wp_enqueue_scripts", [$this, "enqueueFrontendFiles"]);
+                add_shortcode('ossc', [$this, "rmOsscFunc"]);
             }
         }
 
@@ -117,15 +117,10 @@ if (!class_exists("RmOssc")) {
         public function githubPullRequests($repo, $users = null)
         {
             $userString = '';
-            if (isset($users)) {
-                $first = true;
-                foreach ($users as $user) {
-                    if (!$first) {
-                        $userString .= "+or+author:$user";
-                    } else {
-                        $first = false;
-                        $userString .= "+author:$user";
-                    }
+            if ($users) {
+                foreach ($users as $index => $user) {
+                    $connector = $index === 0 ? '+author:' : '+or+author:';
+                    $userString .= $connector . $user;
                 }
             }
 
@@ -145,12 +140,12 @@ if (!class_exists("RmOssc")) {
 
             $args = array(
                 'timeout' => '120',
-                'headers' => array(
+                'headers' => [
                     'Accept' => 'application/vnd.github+json',
                     'Authorization' => "Bearer $gitHubApiKey",
                     'X-GitHub-Api-Version' => '2022-11-28',
                     'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:105.0) Gecko/20100101 Firefox/105.0 +rmOssc'
-                )
+                ]
             );
 
             return wp_remote_get($url, $args);
