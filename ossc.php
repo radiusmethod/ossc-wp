@@ -1,15 +1,16 @@
 <?php
 /**
- * Plugin Name:   Open Source Software Contributions
- * Plugin URI:    https://github.com/radiusmethod/ossc-wp/
- * Description:   Display a daily meditation on your site. To use this, specify [fetch_meditation] in your text code.
- * Install:       Drop this directory in the "wp-content/plugins/" directory and activate it. You need to specify "[ossc]" in the code section of a page or a post.
- * Contributors:  pjaudiomv, radius314
- * Authors:        pjaudiomv, radius314
- * Version:       1.1.1
- * Requires PHP:  8.1
- * License:       GPL v2 or later
- * License URI:   https://www.gnu.org/licenses/gpl-2.0.html
+ * Plugin Name:       Open Source Software Contributions
+ * Plugin URI:        https://github.com/radiusmethod/ossc-wp/
+ * Description:       Display a daily meditation on your site. To use this, specify [fetch_meditation] in your text code.
+ * Install:           Drop this directory in the "wp-content/plugins/" directory and activate it. You need to specify "[ossc]" in the code section of a page or a post.
+ * Contributors:      pjaudiomv, radius314
+ * Authors:           pjaudiomv, radius314
+ * Version:           1.1.1
+ * Requires PHP:      8.1
+ * Requires at least: 6.2
+ * License:           GPL v2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 namespace OsscPlugin;

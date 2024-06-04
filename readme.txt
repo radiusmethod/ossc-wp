@@ -17,6 +17,10 @@ Displays Pull Request links from GitHub for Open Source Software Contributions s
 SHORTCODE
 [ossc]
 
+EXAMPLES
+
+<a href="https://radiusmethod.com/oss/">https://radiusmethod.com/oss/</a>
+
 MORE INFORMATION
 
 <a href="https://github.com/radiusmethod/wp-ossc" target="_blank">https://github.com/radiusmethod/wp-ossc</a>

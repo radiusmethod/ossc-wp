@@ -1,11 +1,16 @@
-# Description
+# Open Source Software Contributions WordPress Plugin
+
+## Description
 
 Displays Pull Request links from GitHub for Open Source Software Contributions simply add [ossc] shortcode to your page and configure settings.
 
-# SHORTCODE
+## SHORTCODE
 [ossc]
 
-# Installation
+## EXAMPLE
+[https://radiusmethod.com/oss/](https://radiusmethod.com/oss/)
+
+## Installation
 
 This section describes how to install the plugin and get it working.
 
@@ -16,9 +21,3 @@ This section describes how to install the plugin and get it working.
    2. Add a comma separated string of GitHub repos you want to include contributions of. Ex. `someorg/somerepo,someorg2/somerepo2`.
    3. Add a comma separated string of GitHub users you want to search contributions of within those repos. Ex. `someuser1,someuser2`.
 4. Add [ossc] shortcode to your WordPress page/post.
-
-# Changelog
-
-= 1.0.0 =
-
-* Initial Release
