@@ -4,7 +4,7 @@ Contributors: pjaudiomv, radius314
 Tags: ossc, open source software contributions, github, pull requests
 Requires at least: 6.2
 Tested up to: 6.5
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -34,6 +34,10 @@ This section describes how to install the plugin and get it working.
 4. Add [ossc] shortcode to your WordPress page/post.
 
 == Changelog ==
+
+= 1.1.1 =
+
+* Added pagination support for Git Repos.
 
 = 1.1.0 =
 
