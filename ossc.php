@@ -4,8 +4,8 @@
  * Plugin URI:    https://github.com/radiusmethod/ossc-wp/
  * Description:   Display a daily meditation on your site. To use this, specify [fetch_meditation] in your text code.
  * Install:       Drop this directory in the "wp-content/plugins/" directory and activate it. You need to specify "[ossc]" in the code section of a page or a post.
- * Contributors:  pjaudiomv
- * Author:        pjaudiomv
+ * Contributors:  pjaudiomv, radius314
+ * Authors:        pjaudiomv, radius314
  * Version:       1.1.1
  * Requires PHP:  8.1
  * License:       GPL v2 or later
@@ -171,27 +171,53 @@ class OSSC {
 		return $links;
 	}
 
+	private static function determine_option( string|array $attrs, string $option ): string {
+		if ( isset( $_POST['ossc_nonce'] ) && wp_verify_nonce( $_POST['ossc_nonce'], 'ossc_action' ) ) {
+			if ( isset( $_POST[ $option ] ) ) {
+				// Form data option
+				return sanitize_text_field( strtolower( $_POST[ $option ] ) );
+			}
+		}
+		if ( isset( $_GET[ $option ] ) ) {
+			// Query String Option
+			return wp_kses( strtolower( $_GET[ $option ] ), [ 'br' => [] ] );
+		} elseif ( ! empty( $attrs[ $option ] ) ) {
+			// Shortcode Option
+			return sanitize_text_field( strtolower( $attrs[ $option ] ) );
+		} else {
+			// Settings Option or Default
+			return sanitize_text_field( strtolower( get_option( $option ) ?? '' ) );
+		}
+	}
+
 	public static function draw_settings(): void {
 		// Display the plugin's settings page
+		$github_api_key     = esc_attr( get_option( 'github_api_key' ) );
+		$github_repos   = esc_attr( get_option( 'github_repos' ) );
+		$github_users = esc_attr( get_option( 'github_users' ) );
+		$status = self::determine_option( [], 'status' );
+		$message = self::determine_option( [], 'message' );
+		error_log( $message );
 		?>
 		<div class="ossc_admin_div">
 			<h2>Open Source Software Contributions</h2>
 			<p>You must activate a GitHub personal access token to use this plugin. Instructions can be found here <a href="https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token">https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token</a>.</p>
 			<form method="post" action="options.php">
+				<?php wp_nonce_field( 'ossc_action', 'ossc_nonce' ); ?>
 				<?php settings_fields( self::SETTINGS_GROUP ); ?>
 				<?php do_settings_sections( self::SETTINGS_GROUP ); ?>
 				<table class="ossc_table">
 					<tr class="ossc_tr">
 						<th scope="row" class="ossc_th"><label for="github_api_key">GitHub API Token</label></th>
-						<td class="ossc_td"><input type="text" id="github_api_key" class="ossc_input" name="github_api_key" value="<?php echo esc_attr( get_option( 'github_api_key' ) ); ?>" /></td>
+						<td class="ossc_td"><input type="text" id="github_api_key" class="ossc_input" name="github_api_key" value="<?php echo wp_kses( $github_api_key, [] ); ?>" /></td>
 					</tr>
 					<tr class="ossc_tr">
 						<th scope="row" class="ossc_th"><label for="github_repos">Github Repos (Comma Separated String)</label></th>
-						<td class="ossc_td"><input type="text" id="github_repos" class="ossc_input" name="github_repos" value="<?php echo esc_attr( get_option( 'github_repos' ) ); ?>" /></td>
+						<td class="ossc_td"><input type="text" id="github_repos" class="ossc_input" name="github_repos" value="<?php echo wp_kses( $github_repos, [] ); ?>" /></td>
 					</tr>
 					<tr class="ossc_tr">
 						<th scope="row" class="ossc_th"><label for="github_users">Github Users (Comma Separated String)</label></th>
-						<td class="ossc_td"><input type="text" id="github_users" class="ossc_input" name="github_users" value="<?php echo esc_attr( get_option( 'github_users' ) ); ?>" /></td>
+						<td class="ossc_td"><input type="text" id="github_users" class="ossc_input" name="github_users" value="<?php echo wp_kses( $github_users, [] ); ?>" /></td>
 					</tr>
 				</table>
 				<?php submit_button(); ?>
@@ -199,13 +225,13 @@ class OSSC {
 					<a href="<?php echo esc_attr( admin_url( 'admin-post.php?action=osscManualUpdate' ) ); ?>" class="button button-primary">Manual Update</a>
 				</p>
 			</form>
-			<?php if ( isset( $_GET['status'] ) && 'updated' == $_GET['status'] ) { ?>
+			<?php if ( 'updated' == $status ) { ?>
 				<div class="notice notice-success is-dismissible">
 					<p>GitHub data updated successfully.</p>
 				</div>
-			<?php } elseif ( isset( $_GET['status'] ) && 'error' == $_GET['status'] && isset( $_GET['message'] ) ) { ?>
+			<?php } elseif ( 'error' == $status ) { ?>
 				<div class="notice notice-error is-dismissible">
-					<p><?php echo wp_kses( urldecode( $_GET['message'] ), [ 'br' => [] ] ); ?></p>
+					<p><?php echo wp_kses( urldecode( $message ), [ 'br' => [] ] ); ?></p>
 				</div>
 			<?php } ?>
 		</div>
@@ -237,8 +263,8 @@ class OSSC {
 	public function fetch_and_save_github_data(): array|bool {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ossc_github_data';
-		$github_repos = explode( ',', get_option( 'github_repos' ) );
-		$github_users = explode( ',', get_option( 'github_users' ) );
+		$github_repos = array_values( array_unique( explode( ',', get_option( 'github_repos' ) ) ) );
+		$github_users = array_values( array_unique( explode( ',', get_option( 'github_users' ) ) ) );
 		$errors = [];
 
 		foreach ( $github_repos as $repo ) {
