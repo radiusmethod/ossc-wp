@@ -1,158 +1,324 @@
 <?php
-/*
-Plugin Name: Open Source Software Contributions
-Plugin URI: https://github.com/radiusmethod/wp-ossc/
-Description: Displays Pull Request links from GitHub for Open Source Software Contributions.
-Author: pjaudiomv
-Author URI: https://radiusmethod.com
-Version: 1.0.1
-Install: Drop this directory into the "wp-content/plugins/" directory and activate it.
-*/
-/* Disallow direct access to the plugin file */
-if (basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
-    die('Sorry, but you cannot access this page directly.');
+/**
+ * Plugin Name:   Open Source Software Contributions
+ * Plugin URI:    https://github.com/radiusmethod/ossc-wp/
+ * Description:   Display a daily meditation on your site. To use this, specify [fetch_meditation] in your text code.
+ * Install:       Drop this directory in the "wp-content/plugins/" directory and activate it. You need to specify "[ossc]" in the code section of a page or a post.
+ * Contributors:  pjaudiomv
+ * Author:        pjaudiomv
+ * Version:       1.1.0
+ * Requires PHP:  8.1
+ * License:       GPL v2 or later
+ * License URI:   https://www.gnu.org/licenses/gpl-2.0.html
+ */
+
+namespace OsscPlugin;
+
+if ( basename( $_SERVER['PHP_SELF'] ) == basename( __FILE__ ) ) {
+	die( 'Sorry, but you cannot access this page directly.' );
 }
 
-if (!class_exists("RmOssc")) {
-    // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
-    class RmOssc
-        // phpcs:enable PSR1.Classes.ClassDeclaration.MissingNamespace
-    {
-        public function __construct()
-        {
-            if (is_admin()) {
-                // Back end
-                add_action("admin_menu", [$this, "rmOsscOptionsPage"]);
-                add_action("admin_init", [$this, "rmOsscRegisterSettings"]);
-            } else {
-                // Front end
-                add_action("wp_enqueue_scripts", [$this, "enqueueFrontendFiles"]);
-                add_shortcode('ossc', [$this, "rmOsscFunc"]);
-            }
-        }
+/**
+ * Class OSSC
+ * @package OsscPlugin
+ */
+class OSSC {
 
-        public function enqueueFrontendFiles()
-        {
-            wp_enqueue_style('ossc-css', plugins_url('css/ossc.css', __FILE__), false, '1.0.1', false);
-        }
+	private const SETTINGS_GROUP   = 'ossc-group';
+	private const PLUG_SLUG = 'ossc';
 
-        public function rmOsscRegisterSettings()
-        {
-            add_option('rmOsscGithubApiKey', 'Github API Key.');
-            add_option('githubRepos', '');
-            add_option('githubUsers', '');
-            register_setting('rmOsscOptionGroup', 'rmOsscGithubApiKey', 'rmOsscCallback');
-            register_setting('rmOsscOptionGroup', 'githubRepos', 'rmOsscCallback');
-            register_setting('rmOsscOptionGroup', 'githubUsers', 'rmOsscCallback');
-        }
+	/**
+	 * Singleton instance of the class.
+	 *
+	 * @var null|self
+	 */
+	private static ?self $instance = null;
 
-        public function rmOsscOptionsPage()
-        {
-            add_options_page('OSSC', 'OSSC', 'manage_options', 'rm-ossc', array(
-                &$this,
-                'rmOsscAdminOptionsPage'
-            ));
-        }
-        public function rmOsscAdminOptionsPage()
-        {
-            ?>
-            <div class="ossc_admin_div">
-                <h2>Open Source Software Contributions</h2>
-                <p>You must activate a github personal access token to use this plugin. Instructions can be found here <a herf="https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token">https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token</a>.</p>
-                <form method="post" action="options.php">
-                    <?php settings_fields('rmOsscOptionGroup'); ?>
-                    <table class="ossc_table">
-                        <tr class="ossc_tr">
-                            <th scope="row"><label for="rmOsscGithubApiKey">GitHub API Token</label></th>
-                            <td class="ossc_td"><input type="text" id="rmOsscGithubApiKey" name="rmOsscGithubApiKey" value="<?php echo get_option('rmOsscGithubApiKey'); ?>" /></td>
-                        </tr>
-                        <tr class="ossc_tr">
-                            <th scope="row"><label for="githubRepos">Github Repos (Comma Separated String)</label></th>
-                            <td class="ossc_td"><input type="text" id="githubRepos" name="githubRepos" value="<?php echo get_option('githubRepos'); ?>" /></td>
-                        </tr>
-                        <tr class="ossc_tr">
-                            <th scope="row"><label for="githubUsers">Github Users (Comma Separated String)</label></th>
-                            <td class="ossc_td"><input type="text" id="githubUsers" name="githubUsers" value="<?php echo get_option('githubUsers'); ?>" /></td>
-                        </tr>
-                    </table>
-                    <?php  submit_button(); ?>
-                </form>
-            </div>
-            <?php
-        }
+	/**
+	 * Constructor method for initializing the plugin.
+	 */
+	public function __construct() {
+		add_action( 'init', [ $this, 'plugin_setup' ] );
+		add_action( 'ossc_daily_event', [ $this, 'fetch_and_save_github_data' ] );
+		register_activation_hook( __FILE__, [ static::class, 'ossc_activate' ] );
+		register_deactivation_hook( __FILE__, [ static::class, 'ossc_deactivate' ] );
+	}
 
-        public function rmOssc()
-        {
-            $this->__construct();
-        }
+	/**
+	 * Setup method for initializing the plugin.
+	 *
+	 * This method checks if the current context is in the admin dashboard or not.
+	 * If in the admin dashboard, it registers admin-related actions and settings.
+	 * If not in the admin dashboard, it sets up a shortcode and associated actions.
+	 *
+	 * @return void
+	 */
+	public function plugin_setup(): void {
+		if ( is_admin() ) {
+			add_action( 'admin_menu', [ static::class, 'create_menu' ] );
+			add_action( 'admin_init', [ static::class, 'register_settings' ] );
+			add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_backend_files' ] );
+			add_action( 'admin_post_osscManualUpdate', [ $this, 'manual_update_handler' ] );
+		} else {
+			add_shortcode( self::PLUG_SLUG, [ $this, 'render_ossc' ] );
+		}
+	}
 
-        public function rmOsscFunc($atts = [])
-        {
-            $content = '<div class="ossc_div">';
+	public static function ossc_activate(): void {
+		self::ossc_create_table();
+		self::ossc_schedule_event();
+	}
 
-            $githubRepos = explode(",", get_option('githubRepos'));
-            $githubUsers = explode(",", get_option('githubUsers'));
+	public static function ossc_deactivate(): void {
+		self::ossc_drop_table();
+		self::ossc_unschedule_event();
+	}
 
-            foreach ($githubRepos as $repo) {
-                $repoName = explode("/", $repo)[1];
-                $content .= '<p><strong><a href="https://github.com/' . $repo . '" target="_blank" data-type="URL" rel="noreferrer noopener">' . $repoName . '</a></strong></p>';
-                $items = $this->githubPullRequests($repo, $githubUsers);
-                if (is_string($items)) {
-                    return $items;
-                }
-                usort($items['items'], function ($a, $b) {
-                    return strnatcasecmp(strtotime($b['closed_at']), strtotime($a['closed_at']));
-                });
-                $content .= '<ul class="ossc_ul">';
-                foreach ($items['items'] as $item) {
-                    $content .= '<li class="ossc_li">' . '<a target="_blank" rel="noopener noreferrer" href="' . $item['html_url'] . '">' . $item['html_url'] . '</a></li>';
-                }
-                $content .= "</ul>";
-            }
+	private static function ossc_schedule_event(): void {
+		if ( ! wp_next_scheduled( 'ossc_daily_event' ) ) {
+			wp_schedule_event( time(), 'daily', 'ossc_daily_event', [] );
+		}
+	}
 
-            $content .= "</div>";
-            return $content;
-        }
+	private static function ossc_unschedule_event(): void {
+		wp_clear_scheduled_hook( 'ossc_daily_event' );
+	}
 
-        public function githubPullRequests($repo, $users = null)
-        {
-            $userString = '';
-            if ($users) {
-                foreach ($users as $user) {
-                    $connector = '+author:';
-                    $userString .= $connector . $user;
-                }
-            }
+	public function enqueue_backend_files(): void {
+		wp_enqueue_style( self::PLUG_SLUG, plugin_dir_url( __FILE__ ) . 'css/admin-ossc.css', false, '1.0.0', 'all' );
+	}
 
-            $results = $this->get("https://api.github.com/search/issues?q=is:pr+is:merged+repo:$repo$userString");
-            $httpcode = wp_remote_retrieve_response_code($results);
-            $response_message = wp_remote_retrieve_response_message($results);
-            if ($httpcode != 200 && $httpcode != 302 && $httpcode != 304 && !empty($response_message)) {
-                return 'Problem Connecting to Server!';
-            }
-            $body = wp_remote_retrieve_body($results);
-            return json_decode($body, true);
-        }
+	public function manual_update_handler(): void {
+		$result = $this->fetch_and_save_github_data();
+		if ( is_array( $result ) && ! empty( $result ) ) {
+			$error_message = implode( '<br>', $result );
+			wp_redirect( admin_url( 'options-general.php?page=' . self::PLUG_SLUG . '&status=error&message=' . urlencode( $error_message ) ) );
+		} else {
+			wp_redirect( admin_url( 'options-general.php?page=' . self::PLUG_SLUG . '&status=updated' ) );
+		}
+		exit();
+	}
 
-        public function get($url)
-        {
-            $gitHubApiKey = get_option('rmOsscGithubApiKey');
 
-            $args = array(
-                'timeout' => '120',
-                'headers' => [
-                    'Accept' => 'application/vnd.github+json',
-                    'Authorization' => "Bearer $gitHubApiKey",
-                    'X-GitHub-Api-Version' => '2022-11-28',
-                    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:105.0) Gecko/20100101 Firefox/105.0 +rmOssc'
-                ]
-            );
+	private static function ossc_create_table(): void {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'ossc_github_data';
+		$charset_collate = $wpdb->get_charset_collate();
 
-            return wp_remote_get($url, $args);
-        }
-    }
+		$sql = "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            repo varchar(255) NOT NULL,
+            url varchar(255) NOT NULL,
+            closed_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY repo_url (repo, url)
+        ) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	private static function ossc_drop_table(): void {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'ossc_github_data';
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table_name ) );  // phpcs:ignore  WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching,  WordPress.DB.DirectDatabaseQuery.SchemaChange
+	}
+
+	public static function register_settings(): void {
+		register_setting(
+			self::SETTINGS_GROUP,
+			'github_api_key',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			]
+		);
+		register_setting(
+			self::SETTINGS_GROUP,
+			'github_repos',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			]
+		);
+		register_setting(
+			self::SETTINGS_GROUP,
+			'github_users',
+			[
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			]
+		);
+	}
+
+	public static function create_menu(): void {
+		// Create the plugin's settings page in the WordPress admin menu
+		add_options_page(
+			esc_html__( 'OSSC Settings', 'ossc' ), // Page Title
+			esc_html__( 'OSSC', 'ossc' ),          // Menu Title
+			'manage_options',                        // Capability
+			self::PLUG_SLUG,                         // Menu Slug
+			[ static::class, 'draw_settings' ]         // Callback function to display the page content
+		);
+		// Add a settings link in the plugins list
+		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), [ static::class, 'settings_link' ] );
+	}
+
+	public static function settings_link( array $links ): array {
+		// Add a "Settings" link for the plugin in the WordPress admin
+		$settings_url = admin_url( 'options-general.php?page=' . self::PLUG_SLUG );
+		$links[]      = "<a href='{$settings_url}'>Settings</a>";
+		return $links;
+	}
+
+	public static function draw_settings(): void {
+		// Display the plugin's settings page
+		?>
+		<div class="ossc_admin_div">
+			<h2>Open Source Software Contributions</h2>
+			<p>You must activate a GitHub personal access token to use this plugin. Instructions can be found here <a href="https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token">https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token</a>.</p>
+			<form method="post" action="options.php">
+				<?php settings_fields( self::SETTINGS_GROUP ); ?>
+				<?php do_settings_sections( self::SETTINGS_GROUP ); ?>
+				<table class="ossc_table">
+					<tr class="ossc_tr">
+						<th scope="row" class="ossc_th"><label for="github_api_key">GitHub API Token</label></th>
+						<td class="ossc_td"><input type="text" id="github_api_key" class="ossc_input" name="github_api_key" value="<?php echo esc_attr( get_option( 'github_api_key' ) ); ?>" /></td>
+					</tr>
+					<tr class="ossc_tr">
+						<th scope="row" class="ossc_th"><label for="github_repos">Github Repos (Comma Separated String)</label></th>
+						<td class="ossc_td"><input type="text" id="github_repos" class="ossc_input" name="github_repos" value="<?php echo esc_attr( get_option( 'github_repos' ) ); ?>" /></td>
+					</tr>
+					<tr class="ossc_tr">
+						<th scope="row" class="ossc_th"><label for="github_users">Github Users (Comma Separated String)</label></th>
+						<td class="ossc_td"><input type="text" id="github_users" class="ossc_input" name="github_users" value="<?php echo esc_attr( get_option( 'github_users' ) ); ?>" /></td>
+					</tr>
+				</table>
+				<?php submit_button(); ?>
+				<p>
+					<a href="<?php echo esc_attr( admin_url( 'admin-post.php?action=osscManualUpdate' ) ); ?>" class="button button-primary">Manual Update</a>
+				</p>
+			</form>
+			<?php if ( isset( $_GET['status'] ) && 'updated' == $_GET['status'] ) { ?>
+				<div class="notice notice-success is-dismissible">
+					<p>GitHub data updated successfully.</p>
+				</div>
+			<?php } elseif ( isset( $_GET['status'] ) && 'error' == $_GET['status'] && isset( $_GET['message'] ) ) { ?>
+				<div class="notice notice-error is-dismissible">
+					<p><?php echo wp_kses( urldecode( $_GET['message'] ), [ 'br' => [] ] ); ?></p>
+				</div>
+			<?php } ?>
+		</div>
+		<?php
+	}
+
+	public function render_ossc( string|array $attrs = [] ): string {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'ossc_github_data';
+		$content = '<div class="ossc_div">';
+
+		$github_repos = explode( ',', get_option( 'github_repos' ) );
+
+		foreach ( $github_repos as $repo ) {
+			$repo_name = explode( '/', $repo )[1] ?? '';
+			$content .= '<p><strong><a href="https://github.com/' . $repo . '" target="_blank" data-type="URL" rel="noreferrer noopener">' . $repo_name . '</a></strong></p>';
+			$results = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE repo = %s ORDER BY closed_at DESC', $table_name, $repo ), ARRAY_A ); // phpcs:ignore  WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$content .= '<ul class="ossc_ul">';
+			foreach ( $results as $item ) {
+				$content .= '<li class="ossc_li">' . '<a target="_blank" rel="noopener noreferrer" href="' . $item['url'] . '">' . $item['url'] . '</a></li>';
+			}
+			$content .= '</ul>';
+		}
+
+		$content .= '</div>';
+		return $content;
+	}
+
+	public function fetch_and_save_github_data(): array|bool {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'ossc_github_data';
+		$github_repos = explode( ',', get_option( 'github_repos' ) );
+		$github_users = explode( ',', get_option( 'github_users' ) );
+		$errors = [];
+
+		foreach ( $github_repos as $repo ) {
+			$items = $this->github_pull_requests( $repo, $github_users );
+			if ( is_string( $items ) ) {
+				$errors[] = $items;
+				continue;
+			}
+
+			foreach ( $items['items'] as $item ) {
+				$exists = $wpdb->get_var(   // phpcs:ignore  WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->prepare(
+						'SELECT COUNT(*) FROM %i WHERE repo = %s AND url = %s',
+						$table_name,
+						$repo,
+						$item['html_url']
+					)
+				);
+
+				if ( 0 == $exists ) {
+					$data = [
+						'repo' => $repo,
+						'url' => $item['html_url'],
+						'closed_at' => $item['closed_at'],
+					];
+					$wpdb->insert( $table_name, $data );   // phpcs:ignore  WordPress.DB.DirectDatabaseQuery.DirectQuery
+				}
+			}
+		}
+
+		if ( ! empty( $errors ) ) {
+			return $errors;
+		}
+
+		return true;
+	}
+
+	private function github_pull_requests( string $repo, ?array $users = null ): array|string {
+		$user_string = '';
+		if ( $users ) {
+			foreach ( $users as $user ) {
+				$connector = '+author:';
+				$user_string .= $connector . $user;
+			}
+		}
+
+		$results = $this->get( "https://api.github.com/search/issues?q=is:pr+is:merged+repo:$repo$user_string" );
+		$httpcode = wp_remote_retrieve_response_code( $results );
+		$response_message = wp_remote_retrieve_response_message( $results );
+		if ( 200 != $httpcode && 302 != $httpcode && 304 != $httpcode && ! empty( $response_message ) ) {
+			return 'Problem Connecting to Server! : ' . $response_message;
+		}
+		$body = wp_remote_retrieve_body( $results );
+		return json_decode( $body, true );
+	}
+
+	private function get( string $url ): array|WP_Error {
+		$github_api_key = get_option( 'github_api_key' );
+
+		$args = array(
+			'timeout' => '120',
+			'headers' => [
+				'Accept' => 'application/vnd.github+json',
+				'Authorization' => "Bearer $github_api_key",
+				'X-GitHub-Api-Version' => '2022-11-28',
+				'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:105.0) Gecko/20100101 Firefox/105.0',
+			],
+		);
+
+		return wp_remote_get( $url, $args );
+	}
+
+	public static function get_instance(): self {
+		if ( null == self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
 }
 
-if (class_exists("RmOssc")) {
-    $rmOssc_instance = new RmOssc();
-}
+OSSC::get_instance();
+
+?>

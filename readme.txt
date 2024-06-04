@@ -2,10 +2,13 @@
 
 Contributors: pjaudiomv, radius314
 Tags: ossc, open source software contributions, github, pull requests
-Tested up to: 6.3.0
-Stable tag: 1.0.1
+Requires at least: 6.2
+Tested up to: 6.5
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
+
+Displays Pull Request links from GitHub for Open Source Software Contributions simply add [ossc] shortcode to your page and configure settings.
 
 == Description ==
 
@@ -31,6 +34,10 @@ This section describes how to install the plugin and get it working.
 4. Add [ossc] shortcode to your WordPress page/post.
 
 == Changelog ==
+
+= 1.1.0 =
+
+* Contributions are now stored in database and updated daily with WP Cron.
 
 = 1.0.1 =
 
