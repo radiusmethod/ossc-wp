@@ -1,0 +1,34 @@
+tr.ossc_tr {
+    vertical-align: top;
+}
+
+.ossc_admin_div {
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.ossc_table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ossc_tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.ossc_th, .ossc_td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.ossc_th {
+    background-color: #f4f4f4;
+    text-align: left;
+    width: 20%;
+}
+
+.ossc_input {
+    width: 100%;
+}

@@ -42,6 +42,8 @@
     rules here.
 
     -->
-    <rule ref='PSR2'></rule>
-    <rule ref="PSR1"></rule>
+    <rule ref="WordPress-Core">
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+    </rule>
 </ruleset>

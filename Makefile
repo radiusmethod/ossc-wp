@@ -32,3 +32,11 @@ fmt: composer ## PHP Fmt
 .PHONY: dev
 dev: ## Start dev compose
 	docker-compose up
+
+.PHONY: mysql
+mysql:  ## Runs mysql cli in mysql container
+	docker exec -it ossc-wp-db-1 mariadb -u root -psomewordpress wordpress
+
+.PHONY: bash
+bash:  ## Runs bash shell in wordpress container
+	docker exec -it -w /var/www/html ossc-wp-wordpress-1 bash

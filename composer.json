@@ -1,8 +1,14 @@
 {
   "require-dev": {
-    "squizlabs/php_codesniffer": "3.*"
+    "squizlabs/php_codesniffer": "3.*",
+    "wp-coding-standards/wpcs": "^3.0"
   },
   "name": "radiusmethod/wp-ossc",
   "description": "dependencies for OSSC",
-  "license": "GPLv2"
+  "license": "GPLv2",
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  }
 }
