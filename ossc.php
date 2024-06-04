@@ -6,7 +6,7 @@
  * Install:       Drop this directory in the "wp-content/plugins/" directory and activate it. You need to specify "[ossc]" in the code section of a page or a post.
  * Contributors:  pjaudiomv
  * Author:        pjaudiomv
- * Version:       1.1.0
+ * Version:       1.1.1
  * Requires PHP:  8.1
  * License:       GPL v2 or later
  * License URI:   https://www.gnu.org/licenses/gpl-2.0.html
@@ -248,7 +248,7 @@ class OSSC {
 				continue;
 			}
 
-			foreach ( $items['items'] as $item ) {
+			foreach ( $items as $item ) {
 				$exists = $wpdb->get_var(   // phpcs:ignore  WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$wpdb->prepare(
 						'SELECT COUNT(*) FROM %i WHERE repo = %s AND url = %s',
@@ -285,20 +285,53 @@ class OSSC {
 			}
 		}
 
-		$results = $this->get( "https://api.github.com/search/issues?q=is:pr+is:merged+repo:$repo$user_string" );
-		$httpcode = wp_remote_retrieve_response_code( $results );
-		$response_message = wp_remote_retrieve_response_message( $results );
-		if ( 200 != $httpcode && 302 != $httpcode && 304 != $httpcode && ! empty( $response_message ) ) {
-			return 'Problem Connecting to Server! : ' . $response_message;
+		$per_page = 75;
+		$page = 1;
+		$all_results = [];
+
+		while ( true ) {
+			$url = "https://api.github.com/search/issues?q=is:pr+is:merged+repo:$repo$user_string&per_page=$per_page&page=$page";
+			$results = $this->get( $url );
+
+			if ( is_wp_error( $results ) ) {
+				return $results;
+			}
+
+			$httpcode = wp_remote_retrieve_response_code( $results );
+			$response_message = wp_remote_retrieve_response_message( $results );
+			if ( 200 != $httpcode && 302 != $httpcode && 304 != $httpcode && ! empty( $response_message ) ) {
+				return 'Problem Connecting to Server! : ' . $response_message;
+			}
+			$body = wp_remote_retrieve_body( $results );
+			$data = json_decode( $body, true );
+
+			if ( empty( $data['items'] ) ) {
+				break;
+			}
+
+			$all_results = array_merge( $all_results, $data['items'] );
+			$link_header = wp_remote_retrieve_header( $results, 'Link' );
+			$next_page_url = $this->get_next_page_url_from_link_header( $link_header );
+
+			if ( ! $next_page_url ) {
+				break;
+			}
+
+			$page++;
 		}
-		$body = wp_remote_retrieve_body( $results );
-		return json_decode( $body, true );
+
+		return $all_results;
+	}
+
+	private function get_next_page_url_from_link_header( string $link_header ): string {
+		preg_match( '/<(.*?(?:(?:\?|\&)page=(\d+).*)?)>.*rel="(.*)"/', $link_header, $matches, PREG_UNMATCHED_AS_NULL );
+		return $matches[1] ?? '';
 	}
 
 	private function get( string $url ): array|WP_Error {
 		$github_api_key = get_option( 'github_api_key' );
 
-		$args = array(
+		$args = [
 			'timeout' => '120',
 			'headers' => [
 				'Accept' => 'application/vnd.github+json',
@@ -306,7 +339,7 @@ class OSSC {
 				'X-GitHub-Api-Version' => '2022-11-28',
 				'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:105.0) Gecko/20100101 Firefox/105.0',
 			],
-		);
+		];
 
 		return wp_remote_get( $url, $args );
 	}
