@@ -237,8 +237,8 @@ class OSSC {
 	public function fetch_and_save_github_data(): array|bool {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ossc_github_data';
-		$github_repos = explode( ',', get_option( 'github_repos' ) );
-		$github_users = explode( ',', get_option( 'github_users' ) );
+		$github_repos = array_values( array_unique( explode( ',', get_option( 'github_repos' ) ) ) );
+		$github_users = array_values( array_unique( explode( ',', get_option( 'github_users' ) ) ) );
 		$errors = [];
 
 		foreach ( $github_repos as $repo ) {
