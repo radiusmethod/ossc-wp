@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Open Source Software Contributions
  * Plugin URI:        https://github.com/radiusmethod/ossc-wp/
- * Description:       Display a daily meditation on your site. To use this, specify [fetch_meditation] in your text code.
+ * Description:       Displays Pull Request links from GitHub for Open Source Software Contributions. To use this, specify [ossc] in your text code.
  * Install:           Drop this directory in the "wp-content/plugins/" directory and activate it. You need to specify "[ossc]" in the code section of a page or a post.
  * Contributors:      pjaudiomv, radius314
  * Authors:           pjaudiomv, radius314
