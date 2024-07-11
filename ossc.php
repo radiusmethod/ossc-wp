@@ -198,11 +198,10 @@ class OSSC {
 		$github_users = esc_attr( get_option( 'github_users' ) );
 		$status = self::determine_option( [], 'status' );
 		$message = self::determine_option( [], 'message' );
-		error_log( $message );
 		?>
 		<div class="ossc_admin_div">
 			<h2>Open Source Software Contributions</h2>
-			<p>You must activate a GitHub personal access token to use this plugin. Instructions can be found here <a href="https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token">https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token</a>.</p>
+			<p>You must create a GitHub personal access token to use this plugin. Instructions can be found here <a href="https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token">https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token</a>.</p>
 			<form method="post" action="options.php">
 				<?php wp_nonce_field( 'ossc_action', 'ossc_nonce' ); ?>
 				<?php settings_fields( self::SETTINGS_GROUP ); ?>
