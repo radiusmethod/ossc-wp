@@ -3,8 +3,8 @@
 Contributors: pjaudiomv, radius314
 Tags: ossc, open source software contributions, github, pull requests
 Requires at least: 6.2
-Tested up to: 6.5
-Stable tag: 1.1.1
+Tested up to: 6.6.0
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,7 +23,7 @@ EXAMPLES
 
 MORE INFORMATION
 
-<a href="https://github.com/radiusmethod/wp-ossc" target="_blank">https://github.com/radiusmethod/wp-ossc</a>
+<a href="https://github.com/radiusmethod/ossc-wp" target="_blank">https://github.com/radiusmethod/ossc-wp</a>
 
 == Installation ==
 
@@ -38,6 +38,10 @@ This section describes how to install the plugin and get it working.
 4. Add [ossc] shortcode to your WordPress page/post.
 
 == Changelog ==
+
+= 1.1.2 =
+
+* First WordPress plugin repository release.
 
 = 1.1.1 =
 
