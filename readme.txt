@@ -21,6 +21,19 @@ EXAMPLES
 
 <a href="https://radiusmethod.com/oss/">https://radiusmethod.com/oss/</a>
 
+### Third-Party Service Disclosure
+
+This plugin relies on a third-party service, GitHub API, to function properly. The plugin fetches data from GitHub API under the following circumstances:
+
+- When retrieving merged pull requests data to display within the application.
+
+## Service Information
+
+- **Service Used:** GitHub API
+- **API Endpoint:** [GitHub API Documentation](https://docs.github.com/en/rest/reference/pulls)
+- **Terms of Use:** [GitHub Terms of Service](https://docs.github.com/en/github/site-policy/github-terms-of-service)
+- **Privacy Policy:** [GitHub Privacy Statement](https://docs.github.com/en/github/site-policy/github-privacy-statement)
+
 MORE INFORMATION
 
 <a href="https://github.com/radiusmethod/ossc-wp" target="_blank">https://github.com/radiusmethod/ossc-wp</a>
