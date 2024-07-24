@@ -173,7 +173,7 @@ class OSSC {
 	}
 
 	private static function determine_option( string|array $attrs, string $option ): string {
-		if ( isset( $_POST['ossc_nonce'] ) && wp_verify_nonce( $_POST['ossc_nonce'], 'ossc_action' ) ) {
+		if ( isset( $_POST['ossc_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ossc_nonce'] ) ), 'ossc_action' ) ) {
 			if ( isset( $_POST[ $option ] ) ) {
 				// Form data option
 				return sanitize_text_field( strtolower( $_POST[ $option ] ) );
@@ -243,11 +243,17 @@ class OSSC {
 		$table_name = $wpdb->prefix . 'ossc_github_data';
 		$content = '<div class="ossc_div">';
 
-		$github_repos = explode( ',', get_option( 'github_repos' ) );
+		$github_repos_option = sanitize_textarea_field( get_option( 'github_repos' ) )
+
+		if ( ! empty( $github_repos_option ) ) {
+			$github_repos = array_map( 'trim', explode( ',', $github_repos_option ) );
+		} else {
+			$github_repos = [];
+		}
 
 		foreach ( $github_repos as $repo ) {
 			$repo_name = explode( '/', $repo )[1] ?? '';
-			$content .= '<p><strong><a href="https://github.com/' . $repo . '" target="_blank" data-type="URL" rel="noreferrer noopener">' . $repo_name . '</a></strong></p>';
+			$content .= '<p><strong><a href="https://github.com/' . esc_url( $repo ) . '" target="_blank" data-type="URL" rel="noreferrer noopener">' . $repo_name . '</a></strong></p>';
 			$results = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE repo = %s ORDER BY closed_at DESC', $table_name, $repo ), ARRAY_A ); // phpcs:ignore  WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$content .= '<ul class="ossc_ul">';
 			foreach ( $results as $item ) {
@@ -263,8 +269,10 @@ class OSSC {
 	public function fetch_and_save_github_data(): array|bool {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ossc_github_data';
-		$github_repos = array_values( array_unique( explode( ',', get_option( 'github_repos' ) ) ) );
-		$github_users = array_values( array_unique( explode( ',', get_option( 'github_users' ) ) ) );
+		$github_repos_option = sanitize_textarea_field( get_option( 'github_repos' ) );
+		$github_users_option = sanitize_textarea_field( get_option( 'github_users' ) );
+		$github_repos = array_values( array_unique( array_map( 'trim', explode( ',', $github_repos_option ) ) ) );
+		$github_users = array_values( array_unique( array_map( 'trim', explode( ',', $github_users_option ) ) ) );
 		$errors = [];
 
 		foreach ( $github_repos as $repo ) {
@@ -326,7 +334,7 @@ class OSSC {
 			$httpcode = wp_remote_retrieve_response_code( $results );
 			$response_message = wp_remote_retrieve_response_message( $results );
 			if ( 200 != $httpcode && 302 != $httpcode && 304 != $httpcode && ! empty( $response_message ) ) {
-				return 'Problem Connecting to Server! : ' . $response_message;
+				return 'Problem Connecting to Server! : ' . $response_message . ' URL: ' . $url;
 			}
 			$body = wp_remote_retrieve_body( $results );
 			$data = json_decode( $body, true );
@@ -355,7 +363,7 @@ class OSSC {
 	}
 
 	private function get( string $url ): array|WP_Error {
-		$github_api_key = get_option( 'github_api_key' );
+		$github_api_key = sanitize_text_field( get_option( 'github_api_key' ) );
 
 		$args = [
 			'timeout' => '120',
