@@ -243,7 +243,7 @@ class OSSC {
 		$table_name = $wpdb->prefix . 'ossc_github_data';
 		$content = '<div class="ossc_div">';
 
-		$github_repos_option = sanitize_textarea_field( get_option( 'github_repos' ) )
+		$github_repos_option = sanitize_textarea_field( get_option( 'github_repos' ) );
 
 		if ( ! empty( $github_repos_option ) ) {
 			$github_repos = array_map( 'trim', explode( ',', $github_repos_option ) );

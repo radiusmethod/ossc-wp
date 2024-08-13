@@ -3,7 +3,7 @@
 Contributors: pjaudiomv, radius314
 Tags: ossc, open source software contributions, github, pull requests
 Requires at least: 6.2
-Tested up to: 6.6.0
+Tested up to: 6.6.1
 Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -34,7 +34,7 @@ This plugin relies on a third-party service, GitHub API, to function properly. T
 - **Terms of Use:** [GitHub Terms of Service](https://docs.github.com/en/github/site-policy/github-terms-of-service)
 - **Privacy Policy:** [GitHub Privacy Statement](https://docs.github.com/en/github/site-policy/github-privacy-statement)
 
-MORE INFORMATION
+### MORE INFORMATION
 
 <a href="https://github.com/radiusmethod/ossc-wp" target="_blank">https://github.com/radiusmethod/ossc-wp</a>
 
@@ -49,6 +49,11 @@ This section describes how to install the plugin and get it working.
    2. Add a comma separated string of GitHub repos you want to include contributions of. Ex. `someorg/somerepo,someorg2/somerepo2`.
    3. Add a comma separated string of GitHub users you want to search contributions of within those repos. Ex. `someuser1,someuser2`.
 4. Add [ossc] shortcode to your WordPress page/post.
+
+== Screenshots ==
+
+1. screenshot-1.png
+2. screenshot-2.png
 
 == Changelog ==
 
