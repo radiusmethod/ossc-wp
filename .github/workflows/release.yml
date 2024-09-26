@@ -6,7 +6,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out code 🛒
         uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
         run: make lint
 
   package:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       BUILD_DIR: "build"
       DIST_DIR_GITHUB: "dist/github"
