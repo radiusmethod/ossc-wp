@@ -6,7 +6,7 @@
  * Install:           Drop this directory in the "wp-content/plugins/" directory and activate it. You need to specify "[ossc]" in the code section of a page or a post.
  * Contributors:      pjaudiomv, radius314
  * Authors:           pjaudiomv, radius314
- * Version:           1.1.2
+ * Version:           1.1.3
  * Requires PHP:      8.1
  * Requires at least: 6.2
  * License:           GPL v2 or later
@@ -15,7 +15,7 @@
 
 namespace OsscPlugin;
 
-if ( basename( $_SERVER['PHP_SELF'] ) == basename( __FILE__ ) ) {
+if ( ! defined( 'WPINC' ) ) {
 	die( 'Sorry, but you cannot access this page directly.' );
 }
 
@@ -155,8 +155,8 @@ class OSSC {
 	public static function create_menu(): void {
 		// Create the plugin's settings page in the WordPress admin menu
 		add_options_page(
-			esc_html__( 'OSSC Settings', 'ossc' ), // Page Title
-			esc_html__( 'OSSC', 'ossc' ),          // Menu Title
+			esc_html__( 'OSSC Settings', 'ossc-wp' ), // Page Title
+			esc_html__( 'OSSC', 'ossc-wp' ),          // Menu Title
 			'manage_options',                        // Capability
 			self::PLUG_SLUG,                         // Menu Slug
 			[ static::class, 'draw_settings' ]         // Callback function to display the page content
@@ -176,12 +176,12 @@ class OSSC {
 		if ( isset( $_POST['ossc_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ossc_nonce'] ) ), 'ossc_action' ) ) {
 			if ( isset( $_POST[ $option ] ) ) {
 				// Form data option
-				return sanitize_text_field( strtolower( $_POST[ $option ] ) );
+				return sanitize_text_field( strtolower( wp_unslash( $_POST[ $option ] ) ) );
 			}
 		}
 		if ( isset( $_GET[ $option ] ) ) {
 			// Query String Option
-			return wp_kses( strtolower( $_GET[ $option ] ), [ 'br' => [] ] );
+			return wp_kses( strtolower( wp_unslash( $_GET[ $option ] ) ), [ 'br' => [] ] );
 		} elseif ( ! empty( $attrs[ $option ] ) ) {
 			// Shortcode Option
 			return sanitize_text_field( strtolower( $attrs[ $option ] ) );
@@ -250,16 +250,18 @@ class OSSC {
 		} else {
 			$github_repos = [];
 		}
-
+		asort( $github_repos );
 		foreach ( $github_repos as $repo ) {
 			$repo_name = explode( '/', $repo )[1] ?? '';
-			$content .= '<p><strong><a href="https://github.com/' . esc_url( $repo ) . '" target="_blank" data-type="URL" rel="noreferrer noopener">' . $repo_name . '</a></strong></p>';
 			$results = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE repo = %s ORDER BY closed_at DESC', $table_name, $repo ), ARRAY_A ); // phpcs:ignore  WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$content .= '<ul class="ossc_ul">';
-			foreach ( $results as $item ) {
-				$content .= '<li class="ossc_li">' . '<a target="_blank" rel="noopener noreferrer" href="' . $item['url'] . '">' . $item['url'] . '</a></li>';
+			if ( count( $results ) > 0 ) {
+				$content .= '<p><strong><a href="' . esc_url( 'https://github.com/' . $repo ) . '" target="_blank" data-type="URL" rel="noreferrer noopener">' . $repo_name . '</a></strong></p>';
+				$content .= '<ul class="ossc_ul">';
+				foreach ( $results as $item ) {
+					$content .= '<li class="ossc_li">' . '<a target="_blank" rel="noopener noreferrer" href="' . $item['url'] . '">' . $item['url'] . '</a></li>';
+				}
+				$content .= '</ul>';
 			}
-			$content .= '</ul>';
 		}
 
 		$content .= '</div>';
