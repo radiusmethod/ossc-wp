@@ -21,8 +21,7 @@ jobs:
         run: make lint
 
   package:
-    runs-on: ubuntu-22.04
-#    24.04 does not have svn
+    runs-on: ubuntu-24.04
     env:
       BUILD_DIR: "build"
       DIST_DIR_GITHUB: "dist/github"
@@ -63,6 +62,11 @@ jobs:
           bodyFile: "changelog.txt"
           prerelease: ${{ env.RELEASE_TYPE }}
 
+      - name: Install Subversion 🎻
+        if: "!contains(github.ref, 'beta')"
+        id: install-subversion
+        run: |
+          apt-get update -y && apt-get install -y subversion
 
       - name: Wordpress Release ⛴
         if: "!contains(github.ref, 'beta')"
