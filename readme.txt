@@ -3,8 +3,8 @@
 Contributors: pjaudiomv, radius314
 Tags: ossc, open source software contributions, github, pull requests
 Requires at least: 6.2
-Tested up to: 6.6.1
-Stable tag: 1.1.2
+Tested up to: 6.7.1
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 2. screenshot-2.png
 
 == Changelog ==
+
+= 1.1.3 =
+
+* Added auto sort by repo name.
 
 = 1.1.2 =
 
