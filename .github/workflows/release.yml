@@ -21,7 +21,7 @@ jobs:
         run: make lint
 
   package:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 #    24.04 does not have svn
     env:
       BUILD_DIR: "build"
